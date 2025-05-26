@@ -14,13 +14,10 @@ export default function LoginPage() {
   const [passwordError, setPasswordError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
-  // Check if already logged in
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const isLoggedIn = localStorage.getItem("isLoggedIn")
-      if (isLoggedIn === "true") {
-        router.push("/")
-      }
+    const isLoggedIn = localStorage.getItem("isLoggedIn")
+    if (isLoggedIn === "true") {
+      router.push("/")
     }
   }, [router])
 
@@ -30,56 +27,77 @@ export default function LoginPage() {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+  e.preventDefault()
 
-    // Reset errors
-    setEmailError("")
-    setPasswordError("")
+  setEmailError("")
+  setPasswordError("")
+  let hasError = false
 
-    // Validate inputs
-    let hasError = false
-
-    if (!email) {
-      setEmailError("Email is required")
-      hasError = true
-    } else if (!validateEmail(email)) {
-      setEmailError("Wrong email address")
-      hasError = true
-    }
-
-    if (!password) {
-      setPasswordError("Password is required")
-      hasError = true
-    } else if (password.length < 6) {
-      setPasswordError("Wrong password")
-      hasError = true
-    }
-
-    if (hasError) return
-
-    setIsLoading(true)
-
-    try {
-      // Simple credential check
-      if (email === "admin@example.com" && password === "password") {
-        // Set authentication in localStorage
-        localStorage.setItem("isLoggedIn", "true")
-
-        // Wait a moment before redirecting
-        setTimeout(() => {
-          // Force a hard navigation
-          window.location.href = "/"
-        }, 500)
-      } else {
-        setEmailError("Wrong email address")
-        setPasswordError("Wrong password")
-        setIsLoading(false)
-      }
-    } catch (err) {
-      console.error("Login error:", err)
-      setIsLoading(false)
-    }
+  if (!email) {
+    setEmailError("Email is required")
+    hasError = true
+  } else if (!validateEmail(email)) {
+    setEmailError("Invalid email format")
+    hasError = true
   }
+
+  if (!password) {
+    setPasswordError("Password is required")
+    hasError = true
+  } else if (password.length < 6) {
+    setPasswordError("Password must be at least 6 characters")
+    hasError = true
+  }
+
+  if (hasError) return
+  setIsLoading(true)
+
+  try {
+  // Helper to get cookie by name
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
+
+// After successful csrfRes.ok check
+const csrfToken = getCookie('XSRF-TOKEN');
+
+const response = await fetch("http://localhost:8000/login", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    "X-XSRF-TOKEN": decodeURIComponent(csrfToken), // Add this header
+  },
+      body: JSON.stringify({ email, password }),
+      credentials: "include", // important for Laravel cookie auth
+    })
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        setEmailError("Wrong email or password")
+        setPasswordError("Wrong email or password")
+      } else {
+        console.error("Login failed:", await response.text())
+      }
+      setIsLoading(false)
+      return
+    }
+
+    const data = await response.json()
+    localStorage.setItem("isLoggedIn", "true")
+    localStorage.setItem("token", data.token ?? "")
+
+    router.push("/")
+  } catch (err) {
+    console.error("Network error:", err)
+  } finally {
+    setIsLoading(false)
+  }
+}
+
 
   return (
     <div className="relative flex items-center justify-center min-h-screen">
@@ -164,7 +182,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Test credentials helper - can be removed in production */}
+        {/* Test credentials helper - remove in production */}
         <div className="mt-6 p-3 bg-gray-50 rounded-md text-sm text-gray-600">
           <p className="font-medium mb-1">Test credentials:</p>
           <p>Email: admin@example.com</p>
