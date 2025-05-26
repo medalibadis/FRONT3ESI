@@ -213,26 +213,42 @@ export default function UsersPage() {
   }
 
   const handleAddLecture = () => {
+    console.log('Adding lecture:', newLecture); // Debug log
+
     if (newLecture.name && newLecture.type && newLecture.day && newLecture.time) {
-      const updatedTimeTableData = [...timeTableData, newLecture]
-      setTimeTableData(updatedTimeTableData)
+      const lectureToAdd = {
+        name: newLecture.name,
+        type: newLecture.type,
+        day: newLecture.day,
+        time: newLecture.time
+      };
+
+      setTimeTableData(prevData => [...prevData, lectureToAdd]);
 
       // Update stats
       setTeacherStats(prev => ({
         ...prev,
-        [newLecture.type.toLowerCase()]: prev[newLecture.type.toLowerCase()] + 1,
+        [lectureToAdd.type.toLowerCase()]: prev[lectureToAdd.type.toLowerCase()] + 1,
         totalLectures: prev.totalLectures + 1
-      }))
+      }));
 
-      setIsAddLectureModalOpen(false)
+      // Reset form and close modal
       setNewLecture({
         name: "",
         type: "",
         day: "",
         time: ""
-      })
+      });
+      setIsAddLectureModalOpen(false);
+    } else {
+      console.log('Missing fields:', {
+        name: !newLecture.name,
+        type: !newLecture.type,
+        day: !newLecture.day,
+        time: !newLecture.time
+      }); // Debug log
     }
-  }
+  };
 
   const handleDeleteLectureConfirm = () => {
     if (lectureToDelete) {
@@ -907,7 +923,7 @@ export default function UsersPage() {
 
       {/* Add Lecture Modal */}
       {isAddLectureModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white w-[500px] rounded-lg p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-medium">Add New Lecture</h3>
@@ -959,7 +975,7 @@ export default function UsersPage() {
               <div>
                 <select
                   value={newLecture.time}
-                  onChange={(e) => setNewLecture(prev => ({ ...prev, time: e.target.value, day: "" }))}
+                  onChange={(e) => setNewLecture(prev => ({ ...prev, time: e.target.value }))}
                   className="w-full p-2 border border-gray-200 rounded-lg"
                 >
                   <option value="">Select Time</option>
@@ -979,7 +995,10 @@ export default function UsersPage() {
               </button>
               <button
                 onClick={handleAddLecture}
-                className="px-4 py-2 bg-[#2185D5] text-white rounded-md"
+                className={`px-4 py-2 rounded-md ${newLecture.name && newLecture.type && newLecture.day && newLecture.time
+                  ? 'bg-[#2185D5] text-white hover:bg-[#1a6cb3]'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  }`}
                 disabled={!newLecture.name || !newLecture.type || !newLecture.day || !newLecture.time}
               >
                 Add
