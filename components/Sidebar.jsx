@@ -1,7 +1,7 @@
 "use client"
 import Image from "next/image"
 import Link from "next/link"
-import { Settings, LogOut, Clock } from 'lucide-react'
+import { Settings, LogOut, Clock, DollarSign } from 'lucide-react'
 
 export default function Sidebar() {
     const handleLogout = () => {
@@ -100,6 +100,12 @@ export default function Sidebar() {
                         <Link href="/period" className="sidebar-item">
                             <Clock size={20} />
                             <span>Period</span>
+                        </Link>
+                    </li>
+                    <li>
+                        <Link href="/payment" className="sidebar-item">
+                            <DollarSign size={20} />
+                            <span>Payment</span>
                         </Link>
                     </li>
                     <li>
