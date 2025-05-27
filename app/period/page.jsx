@@ -1,6 +1,6 @@
 "use client"
 import { useState } from 'react'
-import { Clock, History } from 'lucide-react'
+import { Clock, History, Search } from 'lucide-react'
 import Header from '@/components/Header'
 import Sidebar from '@/components/Sidebar'
 
@@ -9,6 +9,7 @@ export default function PeriodPage() {
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
     const [selectedUser, setSelectedUser] = useState(null)
     const [periodDates, setPeriodDates] = useState({ start: "", end: "" })
+    const [searchQuery, setSearchQuery] = useState('')
 
     // Sample users data (replace with actual data from your database)
     const users = [
@@ -16,6 +17,11 @@ export default function PeriodPage() {
         { id: 2, name: "Jane Smith", role: "MCA" },
         { id: 3, name: "Mike Johnson", role: "MCB" },
     ]
+
+    // Filter users based on search query
+    const filteredUsers = users.filter(user =>
+        user.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
 
     // Sample period history (replace with actual data from your database)
     const periodHistory = [
@@ -50,11 +56,23 @@ export default function PeriodPage() {
                 <Header />
                 <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#f8f9fa] p-8">
                     <div className="max-w-6xl mx-auto">
-                        <h1 className="text-2xl font-bold text-[#303841] mb-8">Welcome to Period Management System</h1>
+                        <div className="flex justify-between items-center mb-8">
+                            <h1 className="text-2xl font-bold text-[#303841]">Welcome to Period Management System</h1>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Search by name..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-64 px-4 py-2 pl-10 rounded-md border border-gray-200 text-sm text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-[#2185d5] focus:border-transparent"
+                                />
+                                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                            </div>
+                        </div>
 
                         {/* Users Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {users.map((user) => (
+                            {filteredUsers.map((user) => (
                                 <div key={user.id} className="bg-white rounded-xl border border-[#e5e7eb] p-6">
                                     <div className="flex items-center justify-between mb-4">
                                         <div>

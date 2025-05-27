@@ -2,8 +2,11 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Settings, LogOut, Clock, DollarSign } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 
 export default function Sidebar() {
+    const pathname = usePathname()
+
     const handleLogout = () => {
         localStorage.removeItem("isLoggedIn")
         window.location.href = "/login"
@@ -26,7 +29,10 @@ export default function Sidebar() {
             <nav className="flex-1 py-8 flex flex-col">
                 <ul className="space-y-6 flex-1">
                     <li>
-                        <Link href="/" className="sidebar-item">
+                        <Link
+                            href="/"
+                            className={`sidebar-item ${pathname === '/' ? 'text-black font-bold' : ''}`}
+                        >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <rect x="3" y="3" width="7" height="7" rx="2" stroke="currentColor" strokeWidth="2" />
                                 <rect x="14" y="3" width="7" height="7" rx="2" stroke="currentColor" strokeWidth="2" />
@@ -37,7 +43,10 @@ export default function Sidebar() {
                         </Link>
                     </li>
                     <li>
-                        <Link href="/users" className="sidebar-item">
+                        <Link
+                            href="/users"
+                            className={`sidebar-item ${pathname === '/users' ? 'text-black font-bold' : ''}`}
+                        >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path
                                     d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z"
@@ -58,7 +67,10 @@ export default function Sidebar() {
                         </Link>
                     </li>
                     <li>
-                        <Link href="/holidays" className="sidebar-item">
+                        <Link
+                            href="/holidays"
+                            className={`sidebar-item ${pathname === '/holidays' ? 'text-black font-bold' : ''}`}
+                        >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <rect
                                     x="3"
@@ -97,19 +109,28 @@ export default function Sidebar() {
                         </Link>
                     </li>
                     <li>
-                        <Link href="/period" className="sidebar-item">
+                        <Link
+                            href="/period"
+                            className={`sidebar-item ${pathname === '/period' ? 'text-black font-bold' : ''}`}
+                        >
                             <Clock size={20} />
                             <span>Period</span>
                         </Link>
                     </li>
                     <li>
-                        <Link href="/payment" className="sidebar-item">
+                        <Link
+                            href="/payment"
+                            className={`sidebar-item ${pathname === '/payment' ? 'text-black font-bold' : ''}`}
+                        >
                             <DollarSign size={20} />
                             <span>Payment</span>
                         </Link>
                     </li>
                     <li>
-                        <Link href="/settings" className="sidebar-item">
+                        <Link
+                            href="/settings"
+                            className={`sidebar-item ${pathname === '/settings' ? 'text-black font-bold' : ''}`}
+                        >
                             <Settings size={20} />
                             <span>Settings</span>
                         </Link>

@@ -1,5 +1,5 @@
 "use client"
-import { Calendar, CalendarDays, Plus } from 'lucide-react'
+import { Calendar, CalendarDays, Plus, Search } from 'lucide-react'
 import Header from '@/components/Header'
 import Sidebar from '@/components/Sidebar'
 import { useState } from 'react'
@@ -42,12 +42,18 @@ const initialHolidays = [
 export default function UpcomingHolidays() {
     const [holidays, setHolidays] = useState(initialHolidays)
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+    const [searchQuery, setSearchQuery] = useState('')
     const [newHoliday, setNewHoliday] = useState({
         name: "",
         date: "",
         duration: "",
         type: "Single Day",
     })
+
+    // Filter holidays based on search query
+    const filteredHolidays = holidays.filter(holiday =>
+        holiday.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
 
     const handleAddHoliday = (e) => {
         e.preventDefault()
@@ -75,25 +81,37 @@ export default function UpcomingHolidays() {
                 <Header />
                 <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#f8f9fa] p-8">
                     <div className="max-w-4xl mx-auto">
-                        {/* Header with Add Button */}
+                        {/* Header with Search and Add Button */}
                         <div className="flex items-center justify-between gap-3 mb-8">
                             <div className="flex items-center gap-3">
                                 <CalendarDays className="w-6 h-6 text-[#28b473]" />
                                 <h1 className="text-2xl font-bold text-[#303841]">Upcoming Holidays</h1>
                             </div>
-                            <button
-                                onClick={() => setIsAddModalOpen(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-[#2185d5] text-white rounded-lg hover:bg-[#1a6cb6] transition-colors"
-                            >
-                                <Plus size={20} />
-                                <span>Add Holiday</span>
-                            </button>
+                            <div className="flex items-center gap-3">
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="Search holidays..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-64 px-4 py-2 pl-10 rounded-md border border-gray-200 text-sm text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-[#2185d5] focus:border-transparent"
+                                    />
+                                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                                </div>
+                                <button
+                                    onClick={() => setIsAddModalOpen(true)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-[#2185d5] text-white rounded-lg hover:bg-[#1a6cb6] transition-colors"
+                                >
+                                    <Plus size={20} />
+                                    <span>Add Holiday</span>
+                                </button>
+                            </div>
                         </div>
 
                         {/* Holidays List */}
                         <div className="bg-white rounded-xl border border-[#e5e7eb] shadow-sm overflow-hidden">
                             <div className="divide-y divide-[#e5e7eb]">
-                                {holidays.map((holiday, index) => (
+                                {filteredHolidays.map((holiday, index) => (
                                     <div
                                         key={holiday.id}
                                         className={`flex items-center justify-between p-6 ${index % 2 === 0 ? "bg-[#f4f7fe]" : "bg-white"}`}

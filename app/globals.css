@@ -56,7 +56,6 @@ body {
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
   }
@@ -101,10 +100,4 @@ body {
 
 .sidebar-item.active svg {
   color: #2185d5;
-}
-
-@layer components {
-  .sidebar-item {
-    @apply flex items-center gap-3 px-6 py-2 text-[#64748b] hover:text-[#2185d5] hover:bg-[#f1f5f9] transition-colors;
-  }
 }

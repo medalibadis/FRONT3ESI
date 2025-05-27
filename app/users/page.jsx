@@ -1,8 +1,8 @@
 "use client"
-import { Bell, Search, Calendar, Pencil, Trash2, ListFilter, ChevronDown, X, Check, Plus, Eye } from "lucide-react"
+import { Bell, Search, Calendar, Pencil, Trash2, ListFilter, ChevronDown, X, Check, Plus, Eye, Clock, ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Header from '@/components/Header'
 import Sidebar from '@/components/Sidebar'
 
@@ -36,6 +36,10 @@ export default function TeachersPage() {
   const [lectureToDelete, setLectureToDelete] = useState(null)
   const [selectedAbsences, setSelectedAbsences] = useState([])
   const [absentLectures, setAbsentLectures] = useState([])
+  const [selectedPeriod, setSelectedPeriod] = useState(null)
+  const [showTimetable, setShowTimetable] = useState(false)
+  const [selectedWeek, setSelectedWeek] = useState(new Date())
+  const [weekDates, setWeekDates] = useState([])
 
   // Sample teachers data
   const [teachers, setTeachers] = useState([
@@ -140,7 +144,7 @@ export default function TeachersPage() {
   // Filter teachers based on role and search query
   const filteredTeachers = teachers.filter(teacher => {
     const matchesRole = selectedRole === 'all' || teacher.role === selectedRole
-    const matchesSearch = (
+    const matchesSearch = searchQuery === '' || (
       teacher.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       teacher.lastName.toLowerCase().includes(searchQuery.toLowerCase())
     )
@@ -237,7 +241,14 @@ export default function TeachersPage() {
 
   const handleTimeTableClick = (teacher) => {
     setSelectedTeacher(teacher)
+    setShowTimetable(false)
+    setSelectedPeriod(null)
     setIsTimeTableModalOpen(true)
+  }
+
+  const handlePeriodSelect = (period) => {
+    setSelectedPeriod(period)
+    setShowTimetable(true)
   }
 
   const handleAddLecture = () => {
@@ -381,6 +392,74 @@ export default function TeachersPage() {
     }
   };
 
+  // Sample teacher periods data (replace with actual data from your database)
+  const [teacherPeriodsData] = useState({
+    1: [ // Teacher ID 1
+      {
+        id: 1,
+        startDate: "2024-01-01",
+        endDate: "2024-03-31",
+        status: "Completed"
+      },
+      {
+        id: 2,
+        startDate: "2024-04-01",
+        endDate: "2024-06-30",
+        status: "Active"
+      }
+    ],
+    2: [ // Teacher ID 2
+      {
+        id: 3,
+        startDate: "2024-01-01",
+        endDate: "2024-03-31",
+        status: "Completed"
+      }
+    ],
+    3: [ // Teacher ID 3
+      {
+        id: 4,
+        startDate: "2024-04-01",
+        endDate: "2024-06-30",
+        status: "Active"
+      }
+    ]
+  })
+
+  // Function to get the dates of the current week
+  const getWeekDates = (date) => {
+    const week = []
+    const startOfWeek = new Date(date)
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()) // Start from Sunday
+
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(startOfWeek)
+      day.setDate(startOfWeek.getDate() + i)
+      week.push(day)
+    }
+    return week
+  }
+
+  // Update week dates when selected week changes
+  useEffect(() => {
+    setWeekDates(getWeekDates(selectedWeek))
+  }, [selectedWeek])
+
+  // Function to navigate to previous/next week
+  const navigateWeek = (direction) => {
+    const newDate = new Date(selectedWeek)
+    newDate.setDate(selectedWeek.getDate() + (direction === 'next' ? 7 : -7))
+    setSelectedWeek(newDate)
+  }
+
+  // Format date for display
+  const formatDate = (date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric'
+    }).format(date)
+  }
+
   return (
     <div className="flex h-screen bg-[#f8f9fa]">
       <Sidebar />
@@ -391,6 +470,15 @@ export default function TeachersPage() {
             <div className="mb-6 flex justify-between items-center">
               <h2 className="text-[#1e293b] text-xl font-medium">Teachers</h2>
               <div className="flex gap-3">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search by name..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="px-4 py-2 rounded-md border border-gray-200 text-sm text-gray-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#2185d5] focus:border-transparent"
+                  />
+                </div>
                 <div className="relative">
                   <button
                     onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
@@ -680,96 +768,201 @@ export default function TeachersPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white w-[700px] rounded-lg p-6">
             <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-xl font-semibold text-[#303841]">
-                  Timetable - {selectedTeacher?.firstName} {selectedTeacher?.lastName}
-                </h2>
-                <div className="mt-2 flex gap-4">
+              <h2 className="text-xl font-semibold text-[#303841]">
+                {showTimetable ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-[#D1FAE5]"></div>
-                    <span className="text-sm">Cours ({teacherStats.cours})</span>
+                    <button
+                      onClick={() => {
+                        setShowTimetable(false)
+                        setSelectedPeriod(null)
+                      }}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <ChevronDown className="transform rotate-90" size={20} />
+                    </button>
+                    <span>
+                      Timetable - {selectedTeacher?.firstName} {selectedTeacher?.lastName}
+                      <div className="text-sm font-normal text-gray-500">
+                        Period: {new Date(selectedPeriod.startDate).toLocaleDateString()} - {new Date(selectedPeriod.endDate).toLocaleDateString()}
+                      </div>
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-[#EDE9FE]"></div>
-                    <span className="text-sm">TD ({teacherStats.td})</span>
+                ) : (
+                  <span>Select Period - {selectedTeacher?.firstName} {selectedTeacher?.lastName}</span>
+                )}
+              </h2>
+            </div>
+
+            {!showTimetable ? (
+              // Show periods list
+              <div className="space-y-4 mb-6">
+                {teacherPeriodsData[selectedTeacher?.id]?.map((period) => (
+                  <div
+                    key={period.id}
+                    className="bg-white border rounded-lg p-4 hover:border-[#2185d5] cursor-pointer transition-colors"
+                    onClick={() => handlePeriodSelect(period)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {new Date(period.startDate).toLocaleDateString()} - {new Date(period.endDate).toLocaleDateString()}
+                        </div>
+                        <div className="text-sm text-gray-500">ID: {period.id}</div>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-sm ${period.status === 'Active'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                        }`}>
+                        {period.status}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-[#FFEDD5]"></div>
-                    <span className="text-sm">TP ({teacherStats.tp})</span>
+                ))}
+                {(!teacherPeriodsData[selectedTeacher?.id] || teacherPeriodsData[selectedTeacher?.id].length === 0) && (
+                  <div className="text-center py-8 text-gray-500">
+                    No periods found for this teacher
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="flex justify-between items-center mb-6">
+                  <div className="flex gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-[#D1FAE5]"></div>
+                      <span className="text-sm">Cours ({teacherStats.cours})</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-[#EDE9FE]"></div>
+                      <span className="text-sm">TD ({teacherStats.td})</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-[#FFEDD5]"></div>
+                      <span className="text-sm">TP ({teacherStats.tp})</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsAddLectureModalOpen(true)}
+                    className="flex items-center gap-2 bg-[#2185d5] text-white px-4 py-2 rounded-lg"
+                  >
+                    <Plus size={20} />
+                    <span>Add Lecture</span>
+                  </button>
+                </div>
+
+                {/* Week Filter */}
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => navigateWeek('prev')}
+                      className="p-1.5 hover:bg-gray-200 rounded-full"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      <Calendar size={16} className="text-gray-500" />
+                      <span className="text-sm font-medium">
+                        {formatDate(weekDates[0])} - {formatDate(weekDates[6])}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => navigateWeek('next')}
+                      className="p-1.5 hover:bg-gray-200 rounded-full"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-7 gap-1 mt-2">
+                    {weekDates.map((date, index) => (
+                      <div key={index} className="text-center">
+                        <div className="text-[10px] text-gray-500">{days[index]}</div>
+                        <div className="text-xs font-medium">{date.getDate()}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-              <button
-                onClick={() => setIsAddLectureModalOpen(true)}
-                className="flex items-center gap-2 bg-[#2185d5] text-white px-4 py-2 rounded-lg"
-              >
-                <Plus size={20} />
-                <span>Add Lecture</span>
-              </button>
-            </div>
 
-            {/* Timetable Grid */}
-            <div className="border rounded-lg overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="py-2 px-3 border-b text-left font-medium text-gray-500 w-20">Time</th>
-                    {days.map(day => (
-                      <th key={day} className="py-2 px-3 border-b border-l text-left font-medium text-gray-500">{day}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {timeSlots.map(timeSlot => (
-                    <tr key={timeSlot} className="border-b">
-                      <td className="py-2 px-3 font-medium text-gray-500 bg-gray-50 w-20">{timeSlot}</td>
-                      {days.map(day => {
-                        const lecture = timeTableData.find(
-                          l => l.day === day && l.time === timeSlot
-                        )
-                        return (
-                          <td key={day} className="py-2 px-3 border-l relative min-h-[80px]">
-                            {lecture && (
-                              <div className={`p-2 rounded ${getLectureColor(lecture.type)} h-full`}>
-                                <div className="flex flex-col h-full">
-                                  <p className="font-medium text-gray-800 text-sm">{lecture.name}</p>
-                                  <p className="text-xs text-gray-600 mt-1">{lecture.type}</p>
-                                </div>
-                              </div>
-                            )}
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                {/* Timetable Grid */}
+                <div className="border rounded-lg overflow-x-auto max-h-[400px]">
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-white z-10">
+                      <tr className="bg-gray-50">
+                        <th className="py-1.5 px-2 border-b text-left font-medium text-gray-500 w-20">Time</th>
+                        {weekDates.map((date, index) => (
+                          <th key={index} className="py-1.5 px-2 border-b border-l text-left font-medium text-gray-500">
+                            <div className="text-xs">{days[index]}</div>
+                            <div className="text-[10px] font-normal">{formatDate(date)}</div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {timeSlots.map(timeSlot => (
+                        <tr key={timeSlot} className="border-b">
+                          <td className="py-1.5 px-2 font-medium text-gray-500 bg-gray-50 w-20 text-xs">{timeSlot}</td>
+                          {weekDates.map((date, index) => {
+                            const lecture = timeTableData.find(
+                              l => l.day === days[index] && l.time === timeSlot
+                            )
+                            return (
+                              <td key={index} className="py-1.5 px-2 border-l relative min-h-[60px]">
+                                {lecture && (
+                                  <div className={`p-1.5 rounded ${getLectureColor(lecture.type)} h-full`}>
+                                    <div className="flex flex-col h-full">
+                                      <p className="font-medium text-gray-800 text-xs">{lecture.name}</p>
+                                      <p className="text-[10px] text-gray-600">{lecture.type}</p>
+                                    </div>
+                                  </div>
+                                )}
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-            <div className="flex justify-between mt-4">
-              <button
-                onClick={() => setIsManageAbsenceModalOpen(true)}
-                className="px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors text-sm"
-              >
-                Manage Absences
-              </button>
-              <div className="flex gap-4">
+                <div className="flex justify-between mt-4">
+                  <button
+                    onClick={() => setIsManageAbsenceModalOpen(true)}
+                    className="px-3 py-1.5 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors text-sm"
+                  >
+                    Manage Absences
+                  </button>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setIsTimeTableModalOpen(false)}
+                      className="px-3 py-1.5 text-gray-600 hover:text-gray-800 text-sm"
+                    >
+                      Close
+                    </button>
+                    {absentLectures.length > 0 && (
+                      <button
+                        onClick={() => setIsViewAbsencesModalOpen(true)}
+                        className="px-3 py-1.5 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm"
+                      >
+                        View Absences ({absentLectures.length})
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {!showTimetable && (
+              <div className="flex justify-end">
                 <button
                   onClick={() => setIsTimeTableModalOpen(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 text-sm"
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
                 >
                   Close
                 </button>
-                {absentLectures.length > 0 && (
-                  <button
-                    onClick={() => setIsViewAbsencesModalOpen(true)}
-                    className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm"
-                  >
-                    View Absences ({absentLectures.length})
-                  </button>
-                )}
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
